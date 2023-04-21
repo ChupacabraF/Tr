@@ -5,14 +5,13 @@ from PIL import Image
 
 def login():      
 
-    # login call
+    # login webservice call
     print("logging in")
 
 def register():      
 
-    # register call
+    # go to register view
     print("registering")
-
 
 ctk.set_default_color_theme("green")
 
