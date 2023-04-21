@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+from PIL import Image
 
 #let the fun begin!
 
@@ -18,7 +18,9 @@ ctk.set_default_color_theme("green")
 
 root = ctk.CTk()
 root.geometry("960x540")
-root.title("YouTube to .mp3 Converter")
+root.title("TrackMate")
+
+#title_image = ctk.CTkImage(Image.open("TrackMate Logo.png"), size=(50, 50))
 
 title_label = ctk.CTkLabel(root, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
 title_label.pack(padx=10, pady=(40, 20))
