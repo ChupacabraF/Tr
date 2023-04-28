@@ -12,7 +12,7 @@ class Register(ctk.CTkFrame):
         title_label = ctk.CTkLabel(self, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
         title_label.pack(padx=10, pady=(40, 20))
 
-        loginname_entry = ctk.CTkEntry(self, placeholder_text="Loginname", width=400, height=50)
+        loginname_entry = ctk.CTkEntry(self, placeholder_text="Username", width=400, height=50)
         loginname_entry.pack(pady=8, padx=20)
 
         password_entry = ctk.CTkEntry(self, placeholder_text="Passwort", width=400, height=50)
