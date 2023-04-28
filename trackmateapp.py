@@ -8,7 +8,7 @@ class MainApp(ctk.CTk):
 
         # Hauptfenster der Anwendung konfigurieren
         self.title("TrackMate")
-        self.geometry("960x540")
+        self.geometry("1000x950")
         # self.set_default_color_theme("green")
 
         # View 1 als Startansicht festlegen
