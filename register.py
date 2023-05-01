@@ -15,7 +15,7 @@ class Register(ctk.CTkFrame):
         title_label.pack(padx=10, pady=(40, 20))
 
         vcmd = (self.register(self.validate), '%P')
-        self.loginname_entry = ctk.CTkEntry(self, placeholder_text="Username", width=400, height=50)
+        self.loginname_entry = ctk.CTkEntry(self, placeholder_text="Loginname", width=400, height=50)
         self.loginname_entry.configure(validate='key', validatecommand=vcmd)
         self.loginname_entry.pack(pady=8, padx=20)
 
