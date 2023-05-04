@@ -53,6 +53,9 @@ def abfrage_login(login_name, passwort):
     if response.status_code == 200:
         print('Benutzer wurde erfolgreich eingeloggt.')
         session = response.body
+        #############TODO########################################
+        #Weiterleitung zur App
+        #########################################################
     else:
         print('Fehler beim Login des Benutzers. Statuscode:', response.status_code)
         #############TODO########################################
