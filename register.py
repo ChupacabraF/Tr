@@ -161,8 +161,7 @@ class Register(ctk.CTkFrame):
             # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
             data = {
                 'loginName': login_name,
-                'passwort': passwort,
-                'passwort': passwort,
+                'passwort': {'passwort': passwort}},
                 'vorname': vorname,
                 'nachname': nachname,
                 'strasse': strasse,
