@@ -20,7 +20,6 @@ class Register(ctk.CTkFrame):
         self.loginname_entry.pack(pady=8, padx=20)
         self.loginname_label_error = ctk.CTkLabel(self, text='Loginname bereits vergeben', text_color='red')
 
-
         # Passwort Feld
         password_entry = ctk.CTkEntry(self, placeholder_text="Passwort", width=400, height=50)
         password_entry.pack(pady=8, padx=20)
@@ -61,7 +60,6 @@ class Register(ctk.CTkFrame):
         self.email_adresse_entry.configure(validate='focusout', validatecommand=validate_mail)
         self.email_adresse_entry.pack(pady=8, padx=20)
         self.email_adresse_label_error = ctk.CTkLabel(self, text='E-Mail Adresse nicht gültig', text_color='red')
-        self.email_adresse_label_error.pack(pady=8, padx=20)
 
         # Registrierungsbutton
         register_button = ctk.CTkButton(self, text="Register", width=300, height=35,
@@ -81,15 +79,12 @@ class Register(ctk.CTkFrame):
         login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=login)
         login_button.pack(pady=5, padx=20)
 
-    def show_message(self, error='', color='black'):
-        self.loginname_label_error['text'] = error
-        self.loginname_entry['foreground'] = color
-
     def validate_mail_adresse(self, value):
         pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         if re.fullmatch(pattern, value) is None:
-            # TODO cmn hier muss dann das Label angezeigt werden
-            self.email_adresse_label_error.configure()
+            self.email_adresse_label_error.pack(pady=8, padx=20, after=self.email_adresse_entry)
+        else:
+            self.email_adresse_label_error.pack_forget()
 
     # Muss ausgeführt werden, sobald die PLZ eingegeben wird
     def abfrage_ort_zu_plz(self, plz):
@@ -133,14 +128,15 @@ class Register(ctk.CTkFrame):
 
             # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
             if response.status_code == 200:
-                # Antwortinhalt als Text ausgeben
-                print("Antwortinhalt:", response.text)
-                return True
-            else:
-                print("Fehler bei der Anfrage. Statuscode:", response.status_code)
-                # TODO cmn klappt das so?
-                self.loginname_label_error.pack(pady=8, padx=20)
-                return False
+                if response.json()["ergebnis"]:
+                    # Antwortinhalt als Text ausgeben
+                    print("Antwortinhalt:", response.text)
+                    self.loginname_label_error.pack_forget()
+                    return True
+                else:
+                    print("Fehler bei der Anfrage. Statuscode:", response.status_code)
+                    self.loginname_label_error.pack(pady=8, padx=20, after=self.loginname_entry)
+                    return False
 
     def register_user(self, login_name, passwort, vorname, nachname, strasse, plz, land, telefon, email_adresse):
         # register webservice call
