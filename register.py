@@ -1,5 +1,4 @@
 import tkinter
-
 import customtkinter as ctk
 import requests
 import re
@@ -32,6 +31,17 @@ class Register(ctk.CTkFrame):
         nachname_entry = ctk.CTkEntry(self, placeholder_text="Nachname", width=400, height=50)
         nachname_entry.pack(pady=8, padx=20)
 
+        # Telefonnummer Feld
+        telefon_entry = ctk.CTkEntry(self, placeholder_text="Telefon", width=400, height=50)
+        telefon_entry.pack(pady=8, padx=20)
+
+        # E-Mail-Feld mit Validierung
+        email_adresse_validieren = (self.register(self.validate_mail_adresse), '%P')
+        self.email_adresse_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse", width=400, height=50)
+        self.email_adresse_entry.configure(validate='focusout', validatecommand=email_adresse_validieren)
+        self.email_adresse_entry.pack(pady=8, padx=20)
+        self.email_adresse_label_error = ctk.CTkLabel(self, text='E-Mail Adresse nicht gültig', text_color='red')
+
         # Straße Feld
         strasse_entry = ctk.CTkEntry(self, placeholder_text="Straße", width=400, height=50)
         strasse_entry.pack(pady=8, padx=20)
@@ -50,20 +60,9 @@ class Register(ctk.CTkFrame):
         land_entry = ctk.CTkEntry(self, placeholder_text="Land", width=400, height=50)
         land_entry.pack(pady=8, padx=20)
 
-        # Telefonnummer Feld
-        telefon_entry = ctk.CTkEntry(self, placeholder_text="Telefon", width=400, height=50)
-        telefon_entry.pack(pady=8, padx=20)
-
-        # E-Mail-Feld mit Validierung
-        validate_mail = (self.register(self.validate_mail_adresse), '%P')
-        self.email_adresse_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse", width=400, height=50)
-        self.email_adresse_entry.configure(validate='focusout', validatecommand=validate_mail)
-        self.email_adresse_entry.pack(pady=8, padx=20)
-        self.email_adresse_label_error = ctk.CTkLabel(self, text='E-Mail Adresse nicht gültig', text_color='red')
-
         # Registrierungsbutton
         register_button = ctk.CTkButton(self, text="Register", width=300, height=35,
-                                        command=lambda: self.register_user(self.loginname_entry.get(),
+                                        command=lambda: self.register_user(master, self.loginname_entry.get(),
                                                                            password_entry.get(),
                                                                            vorname_entry.get(),
                                                                            nachname_entry.get(),
@@ -79,12 +78,15 @@ class Register(ctk.CTkFrame):
         login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=login)
         login_button.pack(pady=5, padx=20)
 
-    def validate_mail_adresse(self, value):
-        pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        if re.fullmatch(pattern, value) is None:
-            self.email_adresse_label_error.pack(pady=8, padx=20, after=self.email_adresse_entry)
-        else:
+    def validate_mail_adresse(self, mailadresse):
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        matched = bool(re.match(pattern, mailadresse))
+        if matched:
             self.email_adresse_label_error.pack_forget()
+            return True
+        else:
+            self.email_adresse_label_error.pack(pady=8, padx=20, after=self.email_adresse_entry)
+            return False
 
     # Muss ausgeführt werden, sobald die PLZ eingegeben wird
     def abfrage_ort_zu_plz(self, plz):
@@ -110,10 +112,10 @@ class Register(ctk.CTkFrame):
             print(response.json())
 
             self.ort_entry.insert(0, response.json()["postalCodes"][0]["placeName"])
-            return True
+            return response.json()["postalCodes"][0]["placeName"]
         else:
             print("Fehler bei der Anfrage. Statuscode:", response.status_code)
-            return True
+            return False
 
     def validate_loginname(self, nutzername):
         if nutzername != 'Username' and nutzername is not None and nutzername != '':
@@ -138,7 +140,8 @@ class Register(ctk.CTkFrame):
                     self.loginname_label_error.pack(pady=8, padx=20, after=self.loginname_entry)
                     return False
 
-    def register_user(self, login_name, passwort, vorname, nachname, strasse, plz, land, telefon, email_adresse):
+    def register_user(self, master, login_name, passwort, vorname, nachname, strasse, plz, land, telefon,
+                      email_adresse):
         # register webservice call
         print("Registering")
 
@@ -155,7 +158,8 @@ class Register(ctk.CTkFrame):
             # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
             data = {
                 "loginName": login_name,
-                "passwort": {"passwort": passwort},
+                "passwort": passwort,
+                "passwort": passwort,
                 "vorname": vorname,
                 "nachname": nachname,
                 "strasse": strasse,
@@ -171,9 +175,12 @@ class Register(ctk.CTkFrame):
 
             # Überprüfen der Response
             if response.status_code == 200:
-                print('Benutzer wurde erfolgreich hinzugefügt.')
-            else:
-                print('Fehler beim Hinzufügen des Benutzers. Statuscode:', response.status_code)
+                if response.json()["ergebnis"]:
+                    print('Benutzer wurde erfolgreich registriert.')
+                    # TODO cmn hier zu Hauptseite dann
+                    # master.switch_frame(Login)
+                else:
+                    print('Fehler beim Hinzufügen des Benutzers. Statuscode:', response.status_code)
         else:
             print("Nutzername schon vorhanden")
 
