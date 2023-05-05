@@ -44,7 +44,7 @@ def abfrage_login(login_name, passwort):
     # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
     data = {
         'loginName': login_name,
-        'passwort': {'passwort': passwort}},
+        'passwort': {'passwort': passwort},
     }
 
     # Senden des POST-Requests
