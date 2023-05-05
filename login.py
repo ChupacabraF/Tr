@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import requests
 from register import Register
+from CTkMessagebox import CTkMessagebox
 
 
 # let the fun begin!
@@ -32,7 +33,7 @@ def login(login_name, passwort, master):
     else:
         #############TODO#########################################
         #Message an User, dass Eingabefelder befüllt werden müssen
-        print('Gebe die Logindaten ein')
+        show_info("", "Gib deine vollständigen Logindaten ein.")
         ##########################################################
 
     
@@ -49,16 +50,23 @@ def abfrage_login(login_name, passwort, master):
 
     # Senden des POST-Requests
     response = requests.post(url, json=data)
+    responseObj = response.json()
+    try:
+        if responseObj.sessionID != "":
+            print('Benutzer wurde erfolgreich eingeloggt.')
+            session = response.content
+            master.switch_frame(Register)
+    except:
+        show_warning("Fehler beim Login", "Der Loginname oder das Kennwort sind falsch.")
+        
     
-    if response.status_code == 200:
-        print('Benutzer wurde erfolgreich eingeloggt.')
-        session = response.content
-        #############TODO########################################
-        #Weiterleitung zur App
-        master.switch_frame(Register)
-        #########################################################
-    else:
-        print('Fehler beim Login des Benutzers. Statuscode:', response.status_code)
-        #############TODO########################################
-        #Message an User, dass Username oder Passwort falsch sind
-        #########################################################
+
+
+def show_info(title, message):
+    # Default messagebox for showing some information
+    CTkMessagebox(title=title, message=message)
+
+def show_warning(title, warning):
+    # Show some retry/cancel warnings
+    msg = CTkMessagebox(title=title, message=warning,
+                  icon="warning", option_1="Ok")
