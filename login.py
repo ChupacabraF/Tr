@@ -43,8 +43,8 @@ def abfrage_login(login_name, passwort):
 
     # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
     data = {
-        'loginName': login_name,
-        'passwort': {'passwort': passwort},
+        "loginName": login_name,
+        "passwort": {'passwort': passwort},
     }
 
     # Senden des POST-Requests
@@ -55,7 +55,7 @@ def abfrage_login(login_name, passwort):
         session = response.body
         #############TODO########################################
         #Weiterleitung zur App
-        master.switch_frame(Register)
+        #master.switch_frame(Register)
         #########################################################
     else:
         print('Fehler beim Login des Benutzers. Statuscode:', response.status_code)
