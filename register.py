@@ -10,48 +10,60 @@ class Register(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         ctk.set_default_color_theme("green")
-
         title_label = ctk.CTkLabel(self, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
         title_label.pack(padx=10, pady=(40, 20))
 
-        vcmd = (self.register(self.validate), '%P')
+        # Loginname Feld mit Validierung und Label
+        loginname_validieren = (self.register(self.validate_loginname), '%P')
         self.loginname_entry = ctk.CTkEntry(self, placeholder_text="Loginname", width=400, height=50)
-        self.loginname_entry.configure(validate='key', validatecommand=vcmd)
+        self.loginname_entry.configure(validate='focusout', validatecommand=loginname_validieren)
         self.loginname_entry.pack(pady=8, padx=20)
+        self.loginname_label_error = ctk.CTkLabel(self, text='Loginname bereits vergeben', text_color='red')
 
-        self.label_error = ctk.CTkLabel(self)
-        self.label_error.pack(pady=8, padx=20)
 
+        # Passwort Feld
         password_entry = ctk.CTkEntry(self, placeholder_text="Passwort", width=400, height=50)
         password_entry.pack(pady=8, padx=20)
 
+        # Vorname Feld
         vorname_entry = ctk.CTkEntry(self, placeholder_text="Vorname", width=400, height=50)
         vorname_entry.pack(pady=8, padx=20)
 
+        # Nachname Feld
         nachname_entry = ctk.CTkEntry(self, placeholder_text="Nachname", width=400, height=50)
         nachname_entry.pack(pady=8, padx=20)
 
+        # Straße Feld
         strasse_entry = ctk.CTkEntry(self, placeholder_text="Straße", width=400, height=50)
         strasse_entry.pack(pady=8, padx=20)
 
+        # PLZ Feld
         search_ort = (self.register(self.abfrage_ort_zu_plz), '%P')
         self.plz_entry = ctk.CTkEntry(self, placeholder_text="PLZ", width=400, height=50)
         self.plz_entry.configure(validate='focusout', validatecommand=search_ort)
         self.plz_entry.pack(pady=8, padx=20)
 
-        # Soll automatisch gesetzt werden
+        # Ort Feld wirt automatisch anhand der PLZ gesetzt
         self.ort_entry = ctk.CTkEntry(self, placeholder_text="Ort", width=400, height=50, state=tkinter.NORMAL)
         self.ort_entry.pack(pady=8, padx=20)
 
+        # Land Feld
         land_entry = ctk.CTkEntry(self, placeholder_text="Land", width=400, height=50)
         land_entry.pack(pady=8, padx=20)
 
+        # Telefonnummer Feld
         telefon_entry = ctk.CTkEntry(self, placeholder_text="Telefon", width=400, height=50)
         telefon_entry.pack(pady=8, padx=20)
 
-        email_adresse_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse", width=400, height=50)
-        email_adresse_entry.pack(pady=8, padx=20)
+        # E-Mail-Feld mit Validierung
+        validate_mail = (self.register(self.validate_mail_adresse), '%P')
+        self.email_adresse_entry = ctk.CTkEntry(self, placeholder_text="E-Mail Adresse", width=400, height=50)
+        self.email_adresse_entry.configure(validate='focusout', validatecommand=validate_mail)
+        self.email_adresse_entry.pack(pady=8, padx=20)
+        self.email_adresse_label_error = ctk.CTkLabel(self, text='E-Mail Adresse nicht gültig', text_color='red')
+        self.email_adresse_label_error.pack(pady=8, padx=20)
 
+        # Registrierungsbutton
         register_button = ctk.CTkButton(self, text="Register", width=300, height=35,
                                         command=lambda: self.register_user(self.loginname_entry.get(),
                                                                            password_entry.get(),
@@ -59,41 +71,25 @@ class Register(ctk.CTkFrame):
                                                                            nachname_entry.get(),
                                                                            strasse_entry.get(), self.plz_entry.get(),
                                                                            land_entry.get(), telefon_entry.get(),
-                                                                           email_adresse_entry.get()))
+                                                                           self.email_adresse_entry.get()))
         register_button.pack(pady=16, padx=20)
 
+        # Schon registriert?
         already_registered_label = ctk.CTkLabel(self, text="Already registered? Than go to login!",
                                                 font=ctk.CTkFont(size=14, weight="normal"))
         already_registered_label.pack(padx=10, pady=(20, 0))
-
         login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=login)
         login_button.pack(pady=5, padx=20)
 
     def show_message(self, error='', color='black'):
-        self.label_error['text'] = error
+        self.loginname_label_error['text'] = error
         self.loginname_entry['foreground'] = color
 
-    # TODO cmn das kann gut für Mail genutzt werden
-    def validate(self, value):
-        """
-        Validat the email entry
-        :param self:
-        :param value:
-        :return:
-        """
+    def validate_mail_adresse(self, value):
         pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         if re.fullmatch(pattern, value) is None:
-            return False
-
-        self.show_message()
-        return True
-
-    def on_invalid(self):
-        """
-        Show the error message if the data is not valid
-        :return:
-        """
-        self.show_message('Please enter a valid email', 'red')
+            # TODO cmn hier muss dann das Label angezeigt werden
+            self.email_adresse_label_error.configure()
 
     # Muss ausgeführt werden, sobald die PLZ eingegeben wird
     def abfrage_ort_zu_plz(self, plz):
@@ -124,7 +120,7 @@ class Register(ctk.CTkFrame):
             print("Fehler bei der Anfrage. Statuscode:", response.status_code)
             return True
 
-    def nutzername_pruefen(self, nutzername):
+    def validate_loginname(self, nutzername):
         if nutzername != 'Username' and nutzername is not None and nutzername != '':
             # URL des Endpunkts
             url = "https://fapfa.azurewebsites.net/FAPServer/service/fapservice/checkLoginName"
@@ -142,6 +138,8 @@ class Register(ctk.CTkFrame):
                 return True
             else:
                 print("Fehler bei der Anfrage. Statuscode:", response.status_code)
+                # TODO cmn klappt das so?
+                self.loginname_label_error.pack(pady=8, padx=20)
                 return False
 
     def register_user(self, login_name, passwort, vorname, nachname, strasse, plz, land, telefon, email_adresse):
@@ -149,7 +147,7 @@ class Register(ctk.CTkFrame):
         print("Registering")
 
         # Prüfung des Benutzernamens auf Eindeutigkeit
-        if self.nutzername_pruefen(login_name):
+        if self.validate_loginname(login_name):
             print("Nutzername noch nicht vorhanden")
             # Abfrage des Orts zur PLZ - GET
             ort = self.abfrage_ort_zu_plz(plz)
