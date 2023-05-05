@@ -13,7 +13,9 @@ class FapUebersicht(ctk.CTkFrame):
         # title_image = ctk.CTkImage(Image.open("TrackMate Logo.png"), size=(50, 50))
 
         # ============ Bei beiden Frames (rechts und links) erstellen ============
-
+        self.user = user
+        self.sessionID = sessionId
+        print('User: ', user, ' sessionID: ', sessionId)
         self.positionSelbst = None
         self.positionenFreunde = []
         self.grid_columnconfigure(0, weight=0)
@@ -62,7 +64,7 @@ class FapUebersicht(ctk.CTkFrame):
         # eigenerStandort = None
         if eigenerStandort is not None:
             # map.set_marker(eigenerStandort['breitengrad'], eigenerStandort['laengengrad'], text="Eigene Position")
-            self.map.set_position(eigenerStandort['breitengrad'], eigenerStandort['laengengrad'], 'Eigene Position',
+            self.map.set_position(eigenerStandort['breitengrad'], eigenerStandort['laengengrad'], 'Mein Standort',
                                   True)
 
     def standortSuchen(self, event=None):
@@ -75,19 +77,19 @@ class FapUebersicht(ctk.CTkFrame):
             self.map.set_marker(element[0], element[1], element[2])
 
         # URL des Endpunkts
-        url = "https://fapfa.azurewebsites.net/FAPServer/service/fapservice/setStandort"
+        url = "http://localhost:8080/FAPServer/service/fapservice/setStandort"
 
         # Query-Parameter
         params = {
-            "loginName": "rainer",
-            "sitzung": "8315c3e0-41d6-4ed7-a10c-7ca14cea5abe",
+            "loginName": self.user,
+            "sitzung": self.sessionID,
             "standort": {
                 "breitengrad": koordinaten[0],
                 "laengengrad": koordinaten[1]
             }
         }
         # GET-Anfrage senden
-        response = requests.get(url, params=params)
+        response = requests.put(url, params=params)
 
         # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
         if response.status_code == 200:
@@ -101,12 +103,13 @@ class FapUebersicht(ctk.CTkFrame):
 
 def getStandortForUser(user, sessionId):
     # URL des Endpunkts
-    url = "https://fapfa.azurewebsites.net/FAPServer/service/fapservice/getStandort"
+    url = "http://localhost:8080/FAPServer/service/fapservice/getStandort"
 
     # Query-Parameter
     params = {
         "login": user,
-        "session": sessionId
+        "session": sessionId,
+        "id": user
     }
     # GET-Anfrage senden
     response = requests.get(url, params=params)

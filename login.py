@@ -53,11 +53,10 @@ def abfrage_login(login_name, passwort, master):
     # Senden des POST-Requests
     response = requests.post(url, json=data)
     responseObj = response.json()
-    try:
-        if 'sessionID' in responseObj:
+    if 'sessionID' in responseObj:
             print('Benutzer wurde erfolgreich eingeloggt.')
             master.switch_frame((FapUebersicht(master, login_name, responseObj['sessionID'])))
-    except:
+    else:
         show_warning("Fehler beim Login", "Der Loginname oder das Kennwort sind falsch.")
         
     
