@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import requests
+
+from fapUebersicht import FapUebersicht
 from register import Register
 from CTkMessagebox import CTkMessagebox
 
@@ -23,7 +25,7 @@ class Login(ctk.CTkFrame):
 
         self.current_view = Register(master=self)
         register_button = ctk.CTkButton(self, text="Register", width=200, height=35,
-                                        command=lambda: master.switch_frame(Register))
+                                        command=lambda: master.switch_frame(Register(master)))
         register_button.pack(pady=100, padx=20)
 
 
@@ -36,11 +38,11 @@ def login(login_name, passwort, master):
         show_info("", "Gib deine vollständigen Logindaten ein.")
         ##########################################################
 
-    
+
 
 def abfrage_login(login_name, passwort, master):
 
-    url = 'https://fapfa.azurewebsites.net/FAPServer/service/fapservice/login'
+    url = 'http://localhost:8080/FAPServer/service/fapservice/login'
 
     # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
     data = {
@@ -52,10 +54,9 @@ def abfrage_login(login_name, passwort, master):
     response = requests.post(url, json=data)
     responseObj = response.json()
     try:
-        if responseObj.sessionID != "":
+        if 'sessionID' in responseObj:
             print('Benutzer wurde erfolgreich eingeloggt.')
-            session = response.content
-            master.switch_frame(Register)
+            master.switch_frame((FapUebersicht(master, login_name, responseObj['sessionID'])))
     except:
         show_warning("Fehler beim Login", "Der Loginname oder das Kennwort sind falsch.")
         
