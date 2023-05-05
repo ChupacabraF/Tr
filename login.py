@@ -55,6 +55,7 @@ def abfrage_login(login_name, passwort):
         session = response.body
         #############TODO########################################
         #Weiterleitung zur App
+        master.switch_frame(Register)
         #########################################################
     else:
         print('Fehler beim Login des Benutzers. Statuscode:', response.status_code)
