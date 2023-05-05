@@ -17,7 +17,7 @@ class Login(ctk.CTkFrame):
         password_entry = ctk.CTkEntry(self, placeholder_text="Password", width=400, height=50)
         password_entry.pack(pady=8, padx=20, )
 
-        login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=lambda: login(self.loginname_entry, password_entry.get()))
+        login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=lambda: login(self.loginname_entry.get(), password_entry.get(), master))
         login_button.pack(pady=16, padx=20)
 
         self.current_view = Register(master=self)
@@ -26,9 +26,9 @@ class Login(ctk.CTkFrame):
         register_button.pack(pady=100, padx=20)
 
 
-def login(login_name, passwort):
+def login(login_name, passwort, master):
     if((login_name != '') & (passwort != '')):
-        abfrage_login(login_name, passwort)
+        abfrage_login(login_name, passwort, master)
     else:
         #############TODO#########################################
         #Message an User, dass Eingabefelder befüllt werden müssen
@@ -37,7 +37,7 @@ def login(login_name, passwort):
 
     
 
-def abfrage_login(login_name, passwort):
+def abfrage_login(login_name, passwort, master):
 
     url = 'https://fapfa.azurewebsites.net/FAPServer/service/fapservice/login'
 
@@ -52,10 +52,10 @@ def abfrage_login(login_name, passwort):
     
     if response.status_code == 200:
         print('Benutzer wurde erfolgreich eingeloggt.')
-        session = response.body
+        session = response.content
         #############TODO########################################
         #Weiterleitung zur App
-        #master.switch_frame(Register)
+        master.switch_frame(Register)
         #########################################################
     else:
         print('Fehler beim Login des Benutzers. Statuscode:', response.status_code)
