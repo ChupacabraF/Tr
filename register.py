@@ -3,6 +3,8 @@ import customtkinter as ctk
 import requests
 import re
 
+import settings
+
 
 class Register(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -120,7 +122,7 @@ class Register(ctk.CTkFrame):
     def validate_loginname(self, nutzername):
         if nutzername != 'Username' and nutzername is not None and nutzername != '':
             # URL des Endpunkts
-            url = "https://fapfa.azurewebsites.net/FAPServer/service/fapservice/checkLoginName"
+            url = f'{settings.baseUri}/checkLoginName'
 
             # Query-Parameter
             params = {"id": nutzername}
@@ -153,7 +155,7 @@ class Register(ctk.CTkFrame):
 
             # Registierung des neuen Benutzers
             # URL des Endpunkts
-            url = 'https://fapfa.azurewebsites.net/FAPServer/service/fapservice/addUser'
+            url = f'{settings.baseUri}/addUser'
 
             # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
             data = {

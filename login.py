@@ -5,6 +5,8 @@ from fapUebersicht import FapUebersicht
 from register import Register
 from CTkMessagebox import CTkMessagebox
 
+import settings
+
 
 # let the fun begin!
 class Login(ctk.CTkFrame):
@@ -17,8 +19,8 @@ class Login(ctk.CTkFrame):
         self.loginname_entry = ctk.CTkEntry(self, placeholder_text="Loginname", width=400, height=50)
         self.loginname_entry.pack(pady=8, padx=20)
 
-        password_entry = ctk.CTkEntry(self, placeholder_text="Password", width=400, height=50)
-        password_entry.pack(pady=8, padx=20, )
+        password_entry = ctk.CTkEntry(self, placeholder_text="Password", width=400, height=50, show="*")
+        password_entry.pack(pady=8, padx=20)
 
         login_button = ctk.CTkButton(self, text="Login", width=300, height=35, command=lambda: login(self.loginname_entry.get(), password_entry.get(), master))
         login_button.pack(pady=16, padx=20)
@@ -42,7 +44,7 @@ def login(login_name, passwort, master):
 
 def abfrage_login(login_name, passwort, master):
 
-    url = 'http://localhost:8080/FAPServer/service/fapservice/login'
+    url = f'{settings.baseUri}/login'
 
     # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
     data = {

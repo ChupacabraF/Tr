@@ -4,6 +4,8 @@ import requests
 from register import Register
 import tkintermapview as mapView
 
+import settings
+
 
 # let the fun begin!
 class FapUebersicht(ctk.CTkFrame):
@@ -77,7 +79,7 @@ class FapUebersicht(ctk.CTkFrame):
             self.map.set_marker(element[0], element[1], element[2])
 
         # URL des Endpunkts
-        url = "http://localhost:8080/FAPServer/service/fapservice/setStandort"
+        url = f'{settings.baseUri}/setStandort'
 
         # Query-Parameter
         params = {
@@ -103,7 +105,7 @@ class FapUebersicht(ctk.CTkFrame):
 
 def getStandortForUser(user, sessionId):
     # URL des Endpunkts
-    url = "http://localhost:8080/FAPServer/service/fapservice/getStandort"
+    url = f'{settings.baseUri}/getStandort'
 
     # Query-Parameter
     params = {
