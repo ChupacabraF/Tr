@@ -121,7 +121,7 @@ def getStandortForUser(user, sessionId):
     if response.status_code == 200 and 'ergebnis' not in responseJson:
         # Antwortinhalt als JSON ausgeben
         print("Antwortinhalt: ", responseJson)
-        return responseJson
+        return responseJson['standort']
     else:
         print("Fehler bei Anfrage des Standorts für ", user, ". Statuscode:", response.status_code)
         print("Antwortinhalt: ", responseJson)
