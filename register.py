@@ -14,8 +14,8 @@ class Register(ctk.CTkFrame):
         super().__init__(master, **kwargs)
 
         ctk.set_default_color_theme("green")
-        title_label = ctk.CTkLabel(self, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
-        title_label.pack(padx=10, pady=(40, 20))
+        self.title_label = ctk.CTkLabel(self, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
+        self.title_label.pack(padx=10, pady=(40, 20))
 
         # Loginname Feld mit Validierung und Label
         loginname_validieren = (self.register(self.validate_loginname), '%P')
@@ -37,16 +37,16 @@ class Register(ctk.CTkFrame):
         self.password_wiederholen_label_error = ctk.CTkLabel(self, text='Passwort unterschiedlich', text_color='red')
 
         # Vorname Feld
-        vorname_entry = ctk.CTkEntry(self, placeholder_text="Vorname", width=400, height=50)
-        vorname_entry.pack(pady=8, padx=20)
+        self.vorname_entry = ctk.CTkEntry(self, placeholder_text="Vorname", width=400, height=50)
+        self.vorname_entry.pack(pady=8, padx=20)
 
         # Nachname Feld
-        nachname_entry = ctk.CTkEntry(self, placeholder_text="Nachname", width=400, height=50)
-        nachname_entry.pack(pady=8, padx=20)
+        self.nachname_entry = ctk.CTkEntry(self, placeholder_text="Nachname", width=400, height=50)
+        self.nachname_entry.pack(pady=8, padx=20)
 
         # Telefonnummer Feld
-        telefon_entry = ctk.CTkEntry(self, placeholder_text="Telefon", width=400, height=50)
-        telefon_entry.pack(pady=8, padx=20)
+        self.telefon_entry = ctk.CTkEntry(self, placeholder_text="Telefon", width=400, height=50)
+        self.telefon_entry.pack(pady=8, padx=20)
 
         # E-Mail-Feld mit Validierung
         email_adresse_validieren = (self.register(self.validate_mail_adresse), '%P')
@@ -56,8 +56,8 @@ class Register(ctk.CTkFrame):
         self.email_adresse_label_error = ctk.CTkLabel(self, text='E-Mail Adresse nicht gültig', text_color='red')
 
         # Straße Feld
-        strasse_entry = ctk.CTkEntry(self, placeholder_text="Straße", width=400, height=50)
-        strasse_entry.pack(pady=8, padx=20)
+        self.strasse_entry = ctk.CTkEntry(self, placeholder_text="Straße", width=400, height=50)
+        self.strasse_entry.pack(pady=8, padx=20)
 
         # PLZ Feld
         search_ort = (self.register(self.abfrage_ort_zu_plz), '%P')
@@ -70,17 +70,19 @@ class Register(ctk.CTkFrame):
         self.ort_entry.pack(pady=8, padx=20)
 
         # Land Feld
-        land_entry = ctk.CTkEntry(self, placeholder_text="Land", width=400, height=50)
-        land_entry.pack(pady=8, padx=20)
+        self.land_entry = ctk.CTkEntry(self, placeholder_text="Land", width=400, height=50)
+        self.land_entry.pack(pady=8, padx=20)
 
         # Registrierungsbutton
         register_button = ctk.CTkButton(self, text="Register", width=300, height=35,
                                         command=lambda: self.register_user(master, self.loginname_entry.get(),
                                                                            self.password_entry.get(),
-                                                                           vorname_entry.get(),
-                                                                           nachname_entry.get(),
-                                                                           strasse_entry.get(), self.plz_entry.get(),
-                                                                           land_entry.get(), telefon_entry.get(),
+                                                                           self.vorname_entry.get(),
+                                                                           self.nachname_entry.get(),
+                                                                           self.strasse_entry.get(),
+                                                                           self.plz_entry.get(),
+                                                                           self.land_entry.get(),
+                                                                           self.telefon_entry.get(),
                                                                            self.email_adresse_entry.get()))
         register_button.pack(pady=16, padx=20)
 
