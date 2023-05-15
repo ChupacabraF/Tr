@@ -6,6 +6,9 @@ import re
 import settings
 
 
+# from fapUebersicht import FapUebersicht
+
+
 class Register(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -22,8 +25,16 @@ class Register(ctk.CTkFrame):
         self.loginname_label_error = ctk.CTkLabel(self, text='Loginname bereits vergeben', text_color='red')
 
         # Passwort Feld
-        password_entry = ctk.CTkEntry(self, placeholder_text="Passwort", width=400, height=50)
-        password_entry.pack(pady=8, padx=20)
+        self.password_entry = ctk.CTkEntry(self, placeholder_text="Passwort", width=400, height=50)
+        self.password_entry.pack(pady=8, padx=20)
+
+        # Passwort-Wiederholen Feld
+        password_wiederholen_validieren = (self.register(self.validate_password_wiederholen), '%P')
+        self.password_wiederholen_entry = ctk.CTkEntry(self, placeholder_text="Passwort wiederholen", width=400,
+                                                       height=50)
+        self.password_wiederholen_entry.configure(validate='focusout', validatecommand=password_wiederholen_validieren)
+        self.password_wiederholen_entry.pack(pady=8, padx=20)
+        self.password_wiederholen_label_error = ctk.CTkLabel(self, text='Passwort unterschiedlich', text_color='red')
 
         # Vorname Feld
         vorname_entry = ctk.CTkEntry(self, placeholder_text="Vorname", width=400, height=50)
@@ -65,7 +76,7 @@ class Register(ctk.CTkFrame):
         # Registrierungsbutton
         register_button = ctk.CTkButton(self, text="Register", width=300, height=35,
                                         command=lambda: self.register_user(master, self.loginname_entry.get(),
-                                                                           password_entry.get(),
+                                                                           self.password_entry.get(),
                                                                            vorname_entry.get(),
                                                                            nachname_entry.get(),
                                                                            strasse_entry.get(), self.plz_entry.get(),
@@ -142,6 +153,14 @@ class Register(ctk.CTkFrame):
                     self.loginname_label_error.pack(pady=8, padx=20, after=self.loginname_entry)
                     return False
 
+    def validate_password_wiederholen(self, password):
+        if password != self.password_entry.get():
+            self.password_wiederholen_label_error.pack(pady=8, padx=20, after=self.password_wiederholen_entry)
+            return False
+        else:
+            self.password_wiederholen_label_error.pack_forget()
+            return True
+
     def register_user(self, master, login_name, passwort, vorname, nachname, strasse, plz, land, telefon,
                       email_adresse):
         # register webservice call
@@ -160,8 +179,7 @@ class Register(ctk.CTkFrame):
             # Daten, die an den Endpunkt gesendet werden sollen (als JSON)
             data = {
                 "loginName": login_name,
-                "passwort": passwort,
-                "passwort": passwort,
+                "passwort": {'passwort': passwort},
                 "vorname": vorname,
                 "nachname": nachname,
                 "strasse": strasse,
@@ -179,8 +197,7 @@ class Register(ctk.CTkFrame):
             if response.status_code == 200:
                 if response.json()["ergebnis"]:
                     print('Benutzer wurde erfolgreich registriert.')
-                    # TODO cmn hier zu Hauptseite dann
-                    # master.switch_frame(Login)
+                    # master.switch_frame((FapUebersicht(master, login_name, response.json()['sessionID'])))
                 else:
                     print('Fehler beim Hinzufügen des Benutzers. Statuscode:', response.status_code)
         else:
