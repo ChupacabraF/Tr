@@ -5,6 +5,7 @@ from register import Register
 import tkintermapview as mapView
 
 import settings
+import json
 
 
 # let the fun begin!
@@ -34,8 +35,33 @@ class FapUebersicht(ctk.CTkFrame):
         # self.frame_left.grid_rowconfigure(2, weight=1)
         self.search_user_field = ctk.CTkEntry(master=self.frame_left,
                                               placeholder_text="Benutzer suchen")
+        self.search_user_field.bind("<Return>", self.standortFreundSuchenUndAufKarteMarkieren)
         self.search_user_field.grid(pady=(20, 0), padx=(20, 20), row=0, column=0)
 
+        self.freundeNamensliste = ctk.CTkLabel(master=self.frame_left, text="test\ntest")
+        self.freundeNamensliste.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
+
+        # Eingabe der Adresse
+        self.land_field = ctk.CTkEntry(master=self.frame_left,
+                                       placeholder_text="Land")
+        self.land_field.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+
+        self.ort_field = ctk.CTkEntry(master=self.frame_left,
+                                      placeholder_text="Ort")
+        self.ort_field.grid(pady=(20, 0), padx=(20, 20), row=3, column=0)
+
+        self.plz_field = ctk.CTkEntry(master=self.frame_left,
+                                      placeholder_text="PLZ")
+        self.plz_field.grid(pady=(20, 0), padx=(20, 20), row=4, column=0)
+
+        self.strasse_field = ctk.CTkEntry(master=self.frame_left,
+                                          placeholder_text="Straße und Hausnr.")
+        self.strasse_field.grid(pady=(20, 0), padx=(20, 20), row=5, column=0)
+
+        self.standort_melden_button = ctk.CTkButton(master=self.frame_left,
+                                                    text="Standort melden",
+                                                    command=self.manuellStandortFuerAktuellenUserSetzen)
+        self.standort_melden_button.grid(pady=(20, 0), padx=(20, 20), row=6, column=0)
         # ============================ Rechte Seite ===============================
 
         self.frame_right.grid_rowconfigure(1, weight=1)
@@ -62,19 +88,47 @@ class FapUebersicht(ctk.CTkFrame):
         self.map.add_right_click_menu_command(label="Als aktuellen Standort melden",
                                               command=self.standortFuerAktuellenUserSetzen, pass_coords=True)
         # setStandortFuerAktuellenUser(self)
-        eigenerStandort = getStandortForUser(user, sessionId)
-        # eigenerStandort = None
-        if eigenerStandort is not None:
-            # map.set_marker(eigenerStandort['breitengrad'], eigenerStandort['laengengrad'], text="Eigene Position")
-            self.map.set_position(eigenerStandort['breitengrad'], eigenerStandort['laengengrad'], 'Mein Standort',
+        eigener_standort = self.getStandortForUser(user)
+        # eigener_standort = None
+        if eigener_standort is not None:
+            # map.set_marker(eigener_standort['breitengrad'], eigener_standort['laengengrad'], text="Eigene Position")
+            self.map.set_position(eigener_standort['breitengrad'], eigener_standort['laengengrad'], 'Mein Standort',
                                   True)
 
     def standortSuchen(self, event=None):
         self.map.set_address(self.standortSucheInput.get())
 
+    def manuellStandortFuerAktuellenUserSetzen(self, event=None):
+        # URL des Endpunkts
+        url = f'{settings.baseUri}/getStandortPerAdresse'
+
+        # Query-Parameter
+        params = {
+            "login": self.user,
+            "session": self.sessionID,
+            "land": self.land_field.get(),
+            "ort": self.ort_field.get(),
+            "plz": self.plz_field.get(),
+            "strasse": self.strasse_field.get()
+        }
+        # GET-Anfrage senden
+        response = requests.get(url, params=params)
+
+        response_json = response.json()
+        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        if response.status_code == 200 and response_json is not None and 'ergebnis' not in response_json:
+            # Antwortinhalt als JSON ausgeben
+            print("Antwortinhalt: ", response_json)
+            koordinaten = [response_json['breitengrad'], response_json['laengengrad']]
+            self.standortFuerAktuellenUserSetzen(koordinaten)
+        else:
+            print("Fehler bei Anfrage der Koordinaten. Statuscode:", response.status_code)
+            print("Antwortinhalt: ", response_json)
+
     def standortFuerAktuellenUserSetzen(self, koordinaten):
         self.map.delete_all_marker()
-        self.positionSelbst = self.map.set_marker(koordinaten[0], koordinaten[1], "Mein Standort")
+        self.positionSelbst = [koordinaten[0], koordinaten[1]]
+        self.map.set_marker(koordinaten[0], koordinaten[1], "Mein Standort")
         for element in self.positionenFreunde:
             self.map.set_marker(element[0], element[1], element[2])
 
@@ -90,8 +144,11 @@ class FapUebersicht(ctk.CTkFrame):
                 "laengengrad": koordinaten[1]
             }
         }
-        # GET-Anfrage senden
-        response = requests.put(url, params=params)
+        headers = {'Content-Type': 'application/json'}
+        body = json.dumps(params)
+
+        # PUT-Anfrage senden
+        response = requests.put(url, data=body, headers=headers)
 
         # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
         if response.status_code == 200:
@@ -102,27 +159,37 @@ class FapUebersicht(ctk.CTkFrame):
             print("Fehler bei der Anfrage. Statuscode:", response.status_code)
             return None
 
+    def standortFreundSuchenUndAufKarteMarkieren(self, event=None):
+        user = self.search_user_field.get()
+        userStandort = self.getStandortForUser(user)
+        if userStandort is not None and 'breitengrad' in userStandort:
+            tmpStandort = [userStandort['breitengrad'], userStandort['laengengrad'], user]
+            self.positionenFreunde.append(tmpStandort)
+            self.map.set_marker(userStandort['breitengrad'], userStandort['laengengrad'], text=user)
+            self.map.set_position(userStandort['breitengrad'], userStandort['laengengrad'], user,
+                                  True)
 
-def getStandortForUser(user, sessionId):
-    # URL des Endpunkts
-    url = f'{settings.baseUri}/getStandort'
+    def getStandortForUser(self, user):
+        # URL des Endpunkts
+        url = f'{settings.baseUri}/getStandort'
 
-    # Query-Parameter
-    params = {
-        "login": user,
-        "session": sessionId,
-        "id": user
-    }
-    # GET-Anfrage senden
-    response = requests.get(url, params=params)
+        # Query-Parameter
+        params = {
+            "login": self.user,
+            "session": self.sessionID,
+            "id": user
+        }
+        # GET-Anfrage senden
+        response = requests.get(url, params=params)
 
-    responseJson = response.json()
-    # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
-    if response.status_code == 200 and 'ergebnis' not in responseJson:
-        # Antwortinhalt als JSON ausgeben
-        print("Antwortinhalt: ", responseJson)
-        return responseJson['standort']
-    else:
-        print("Fehler bei Anfrage des Standorts für ", user, ". Statuscode:", response.status_code)
-        print("Antwortinhalt: ", responseJson)
-        return None
+        responseJson = response.json()
+        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        if response.status_code == 200 and responseJson is not None and 'ergebnis' not in responseJson:
+            # Antwortinhalt als JSON ausgeben
+            print("Antwortinhalt: ", responseJson)
+            return responseJson['standort']
+            # return responseJson
+        else:
+            print("Fehler bei Anfrage des Standorts für ", user, ". Statuscode:", response.status_code)
+            print("Antwortinhalt: ", responseJson)
+            return None
