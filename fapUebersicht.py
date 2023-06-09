@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import tkinter
 import requests
 
 from register import Register
@@ -38,30 +39,45 @@ class FapUebersicht(ctk.CTkFrame):
         self.search_user_field.bind("<Return>", self.standortFreundSuchenUndAufKarteMarkieren)
         self.search_user_field.grid(pady=(20, 0), padx=(20, 20), row=0, column=0)
 
-        self.freundeNamensliste = ctk.CTkLabel(master=self.frame_left, text="test\ntest")
-        self.freundeNamensliste.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
+        self.freundesNamenBox = tkinter.Listbox(master=self.frame_left, background='#343638', foreground='gray84',
+                                                borderwidth=0, selectbackground='#3E454A', selectborderwidth=0,
+                                                activestyle='none')
+        self.freundesNamenBox.grid(pady=(10, 0), padx=(20, 20), row=1, column=0)
+
+        self.freundEntfernen = ctk.CTkButton(master=self.frame_left,
+                                             text="Freund entfernen",
+                                             command=self.freund_entfernen)
+        self.freundEntfernen.grid(pady=(10, 0), padx=(20, 20), row=2, column=0)
+
+        # self.freundeNamensliste = ctk.CTkLabel(master=self.frame_left, text="test\ntest")
+        # self.freundeNamensliste.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
 
         # Eingabe der Adresse
+        standort_eingabe_label = ctk.CTkLabel(master=self.frame_left, text="Standort manuell eingeben:")
+        standort_eingabe_label.grid(pady=(40, 0), padx=(20, 20), row=3, column=0)
+
         self.land_field = ctk.CTkEntry(master=self.frame_left,
                                        placeholder_text="Land")
-        self.land_field.grid(pady=(20, 0), padx=(20, 20), row=2, column=0)
+        self.land_field.grid(pady=(10, 0), padx=(20, 20), row=4, column=0)
+
+        plz_update = (self.register(self.ort_fuer_plz_abfragen), '%P')
+        self.plz_field = ctk.CTkEntry(master=self.frame_left,
+                                      placeholder_text="PLZ")
+        self.plz_field.grid(pady=(10, 0), padx=(20, 20), row=5, column=0)
+        self.plz_field.configure(validate='focusout', validatecommand=plz_update)
 
         self.ort_field = ctk.CTkEntry(master=self.frame_left,
                                       placeholder_text="Ort")
-        self.ort_field.grid(pady=(20, 0), padx=(20, 20), row=3, column=0)
-
-        self.plz_field = ctk.CTkEntry(master=self.frame_left,
-                                      placeholder_text="PLZ")
-        self.plz_field.grid(pady=(20, 0), padx=(20, 20), row=4, column=0)
+        self.ort_field.grid(pady=(10, 0), padx=(20, 20), row=6, column=0)
 
         self.strasse_field = ctk.CTkEntry(master=self.frame_left,
                                           placeholder_text="Straße und Hausnr.")
-        self.strasse_field.grid(pady=(20, 0), padx=(20, 20), row=5, column=0)
+        self.strasse_field.grid(pady=(10, 0), padx=(20, 20), row=7, column=0)
 
         self.standort_melden_button = ctk.CTkButton(master=self.frame_left,
                                                     text="Standort melden",
                                                     command=self.manuellStandortFuerAktuellenUserSetzen)
-        self.standort_melden_button.grid(pady=(20, 0), padx=(20, 20), row=6, column=0)
+        self.standort_melden_button.grid(pady=(10, 0), padx=(20, 20), row=8, column=0)
         # ============================ Rechte Seite ===============================
 
         self.frame_right.grid_rowconfigure(1, weight=1)
@@ -73,12 +89,12 @@ class FapUebersicht(ctk.CTkFrame):
         self.standortSucheInput = ctk.CTkEntry(master=self.frame_right,
                                                placeholder_text="Standort eingeben")
         self.standortSucheInput.grid(row=0, column=0, sticky="we", padx=(12, 0), pady=12)
-        self.standortSucheInput.bind("<Return>", self.standortSuchen)
+        self.standortSucheInput.bind("<Return>", self.standort_suchen)
 
         self.standortSucheButton = ctk.CTkButton(master=self.frame_right,
                                                  text="Suchen",
                                                  width=90,
-                                                 command=self.standortSuchen)
+                                                 command=self.standort_suchen)
         self.standortSucheButton.grid(row=0, column=1, sticky="w", padx=(12, 0), pady=12)
 
         self.map = mapView.TkinterMapView(self.frame_right, width=600, height=400, corner_radius=1)
@@ -94,9 +110,44 @@ class FapUebersicht(ctk.CTkFrame):
             # map.set_marker(eigener_standort['breitengrad'], eigener_standort['laengengrad'], text="Eigene Position")
             self.map.set_position(eigener_standort['breitengrad'], eigener_standort['laengengrad'], 'Mein Standort',
                                   True)
+            self.positionSelbst = [eigener_standort['breitengrad'], eigener_standort['laengengrad']]
 
-    def standortSuchen(self, event=None):
+    def standort_suchen(self, event=None):
         self.map.set_address(self.standortSucheInput.get())
+
+    def freund_entfernen(self, event=None):
+        selected_indices = self.freundesNamenBox.curselection()
+        for i in selected_indices:
+            self.freundesNamenBox.delete(i)
+            self.positionenFreunde.pop(i)
+
+        self.map.delete_all_marker()
+        self.map.set_marker(self.positionSelbst[0], self.positionSelbst[1], "Mein Standort")
+        for element in self.positionenFreunde:
+            self.map.set_marker(element[0], element[1], element[2])
+
+    def ort_fuer_plz_abfragen(self, plz):
+        url = f'{settings.baseUri}/getOrt'
+
+        # Query-Parameter
+        params = {
+            "postalcode": plz,
+            "username": 'demo'
+        }
+        # GET-Anfrage senden
+        response = requests.get(url, params=params)
+
+        response_json = response.json()
+        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        if response.status_code == 200 and response_json is not None and 'name' in response_json:
+            # Antwortinhalt als JSON ausgeben
+            print("Antwortinhalt: ", response_json)
+            self.ort_field.delete(0, ctk.END)
+            self.ort_field.insert(0, response_json['name'])
+        else:
+            print("Fehler bei Anfrage des Ortes zur PLZ: ", plz)
+            print("Antwortinhalt: ", response_json)
+        return True
 
     def manuellStandortFuerAktuellenUserSetzen(self, event=None):
         # URL des Endpunkts
@@ -165,6 +216,7 @@ class FapUebersicht(ctk.CTkFrame):
         if userStandort is not None and 'breitengrad' in userStandort:
             tmpStandort = [userStandort['breitengrad'], userStandort['laengengrad'], user]
             self.positionenFreunde.append(tmpStandort)
+            self.freundesNamenBox.insert('end', user)
             self.map.set_marker(userStandort['breitengrad'], userStandort['laengengrad'], text=user)
             self.map.set_position(userStandort['breitengrad'], userStandort['laengengrad'], user,
                                   True)
