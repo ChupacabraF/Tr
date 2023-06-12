@@ -15,13 +15,10 @@ class MainApp(ctk.CTk):
         # Hauptfenster der Anwendung konfigurieren
         self.title("TrackMate")
         self.geometry("800x600")
-
-        # View 1 als Startansicht festlegen
         self.frame = None
-        # self.current_view.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
 
+        # Login als Startansicht festlegen
         self.switch_frame(Login(self, width=800, height=600))
-        # self.switch_frame(FapUebersicht)
 
     def switch_frame(self, frame_object):
         # Wechselt zur angegebenen Ansicht (Frame-Objekt).
@@ -39,10 +36,11 @@ class MainApp(ctk.CTk):
 class Login(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
-
+        ctk.set_default_color_theme("green")
         title_label = ctk.CTkLabel(self, text="TrackMate", font=ctk.CTkFont(size=30, weight="bold"))
         title_label.pack(padx=10, pady=(40, 20))
 
+        # Inputfelder
         self.loginname_entry = ctk.CTkEntry(self, placeholder_text="Loginname", width=400, height=50)
         self.loginname_entry.pack(pady=8, padx=20)
 
@@ -54,7 +52,6 @@ class Login(ctk.CTkFrame):
                                                                 master))
         login_button.pack(pady=16, padx=20)
 
-        self.current_view = Register(master=self)
         register_button = ctk.CTkButton(self, text="Register", width=200, height=35,
                                         command=lambda: master.switch_frame(Register(master)))
         register_button.pack(pady=100, padx=20)
@@ -63,10 +60,8 @@ class Login(ctk.CTkFrame):
         if ((login_name != '') & (passwort != '')):
             self.abfrage_login(login_name, passwort, master)
         else:
-            #############TODO#########################################
             # Message an User, dass Eingabefelder befüllt werden müssen
             self.show_info("", "Gib deine vollständigen Logindaten ein.")
-            ##########################################################
 
     def abfrage_login(self, login_name, passwort, master):
 
@@ -185,6 +180,7 @@ class Register(ctk.CTkFrame):
         login_button.pack(pady=5, padx=20)
 
     def validate_mail_adresse(self, mailadresse):
+        # Regex dass Email mit bla@bla.bla übereinstimmt
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         matched = bool(re.match(pattern, mailadresse))
         if matched:
@@ -200,6 +196,7 @@ class Register(ctk.CTkFrame):
         # http://api.geonames.org/postalCodeSearchJSON?postalcode=46397&username=isjupr
 
         # URL des Endpunkts
+        # TODO: Endpunkt von ihm einbauen?
         url = "http://api.geonames.org/postalCodeSearchJSON"
 
         # Query-Parameter
@@ -298,9 +295,7 @@ class Register(ctk.CTkFrame):
 class FapUebersicht(ctk.CTkFrame):
     def __init__(self, master, user, sessionId, **kwargs):
         super().__init__(master, **kwargs)
-
         self.master = master
-        # title_image = ctk.CTkImage(Image.open("TrackMate Logo.png"), size=(50, 50))
         self.configure(fg_color='transparent')
 
         # ============ Bei beiden Frames (rechts und links) erstellen ============
@@ -320,12 +315,13 @@ class FapUebersicht(ctk.CTkFrame):
         self.frame_right.grid(row=0, column=1, rowspan=1, pady=0, padx=0, sticky="nsew")
 
         # ============================ Linke Seite ================================
-        # self.frame_left.grid_rowconfigure(2, weight=1)
+        # User suchen und auf Karte anzeigen
         self.search_user_field = ctk.CTkEntry(master=self.frame_left,
                                               placeholder_text="Benutzer suchen")
         self.search_user_field.bind("<Return>", self.standortFreundSuchenUndAufKarteMarkieren)
         self.search_user_field.grid(pady=(12, 0), padx=(20, 20), row=0, column=0)
 
+        # Anzeigen der ausgewählten Freunde
         self.freundesNamenBox = tkinter.Listbox(master=self.frame_left, background='#343638', foreground='gray84',
                                                 borderwidth=0, selectbackground='#3E454A', selectborderwidth=0,
                                                 activestyle='none')
@@ -336,10 +332,7 @@ class FapUebersicht(ctk.CTkFrame):
                                              command=self.freund_entfernen)
         self.freundEntfernen.grid(pady=(10, 0), padx=(20, 20), row=2, column=0)
 
-        # self.freundeNamensliste = ctk.CTkLabel(master=self.frame_left, text="test\ntest")
-        # self.freundeNamensliste.grid(pady=(20, 0), padx=(20, 20), row=1, column=0)
-
-        # Eingabe der Adresse
+        # Eingabe der Adresse fürs Setzen als aktuellen Standort
         standort_eingabe_label = ctk.CTkLabel(master=self.frame_left, text="Standort manuell eingeben:")
         standort_eingabe_label.grid(pady=(120, 0), padx=(20, 20), row=3, column=0)
 
@@ -373,6 +366,7 @@ class FapUebersicht(ctk.CTkFrame):
         self.frame_right.grid_columnconfigure(1, weight=0)
         self.frame_right.grid_columnconfigure(2, weight=1)
 
+        # Ort auf Karte suchen
         self.standortSucheInput = ctk.CTkEntry(master=self.frame_right,
                                                placeholder_text="Standort eingeben")
         self.standortSucheInput.grid(row=0, column=0, sticky="we", padx=(12, 0), pady=12)
@@ -388,17 +382,16 @@ class FapUebersicht(ctk.CTkFrame):
                                           command=lambda: self.logout(master))
         self.logoutButton.grid(row=0, column=2, sticky='w', padx=(220, 0))
 
+        # Karte
         self.map = mapView.TkinterMapView(self.frame_right, width=600, height=550, corner_radius=1)
         self.map.grid(row=1, rowspan=1, column=0, columnspan=3, sticky="nswe", padx=(0, 0), pady=(0, 0))
-        # map.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
         self.map.add_right_click_menu_command(label="Als aktuellen Standort melden",
                                               command=self.standortFuerAktuellenUserSetzen, pass_coords=True)
-        # setStandortFuerAktuellenUser(self)
+
+        # eigenen Standort abfragen und in Karte markieren
         eigener_standort = self.getStandortForUser(user)
-        # eigener_standort = None
         if eigener_standort is not None:
-            # map.set_marker(eigener_standort['breitengrad'], eigener_standort['laengengrad'], text="Eigene Position")
             self.map.set_position(eigener_standort['breitengrad'], eigener_standort['laengengrad'], 'Mein Standort',
                                   True)
             self.positionSelbst = [eigener_standort['breitengrad'], eigener_standort['laengengrad']]
@@ -415,16 +408,24 @@ class FapUebersicht(ctk.CTkFrame):
             "sitzung": self.sessionID
         }
         # POST-Anfrage senden
-        response = requests.post(url, params=params)
-        print(response.json)
+        # diesmal müssen die Parameter als Body mitgeschickt werden
+        headers = {'Content-Type': 'application/json'}
+        body = json.dumps(params)
+
+        # PUT-Anfrage senden
+        response = requests.post(url, data=body, headers=headers)
+        print(response.json())
+        # zurück zum Login
         master.switch_frame(Login(master))
 
     def freund_entfernen(self, event=None):
         selected_indices = self.freundesNamenBox.curselection()
         for i in selected_indices:
+            # Ausgewählten Benutzer aus Box entfernen und Liste der Position der Freunde
             self.freundesNamenBox.delete(i)
             self.positionenFreunde.pop(i)
 
+        # Karte neu laden
         self.map.delete_all_marker()
         self.map.set_marker(self.positionSelbst[0], self.positionSelbst[1], "Mein Standort")
         for element in self.positionenFreunde:
@@ -442,7 +443,7 @@ class FapUebersicht(ctk.CTkFrame):
         response = requests.get(url, params=params)
 
         response_json = response.json()
-        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        # Überprüfen, ob die Anfrage erfolgreich war
         if response.status_code == 200 and response_json is not None and 'name' in response_json:
             # Antwortinhalt als JSON ausgeben
             print("Antwortinhalt: ", response_json)
@@ -470,7 +471,7 @@ class FapUebersicht(ctk.CTkFrame):
         response = requests.get(url, params=params)
 
         response_json = response.json()
-        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        # Überprüfen, ob die Anfrage erfolgreich war
         if response.status_code == 200 and response_json is not None and 'ergebnis' not in response_json:
             # Antwortinhalt als JSON ausgeben
             print("Antwortinhalt: ", response_json)
@@ -499,13 +500,14 @@ class FapUebersicht(ctk.CTkFrame):
                 "laengengrad": koordinaten[1]
             }
         }
+        # diesmal müssen die Parameter als Body mitgeschickt werden
         headers = {'Content-Type': 'application/json'}
         body = json.dumps(params)
 
         # PUT-Anfrage senden
         response = requests.put(url, data=body, headers=headers)
 
-        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        # Überprüfen, ob die Anfrage erfolgreich war
         if response.status_code == 200:
             # Antwortinhalt als JSON ausgeben
             print("Antwortinhalt: ", response.json())
@@ -518,8 +520,10 @@ class FapUebersicht(ctk.CTkFrame):
         user = self.search_user_field.get()
         userStandort = self.getStandortForUser(user)
         if userStandort is not None and 'breitengrad' in userStandort:
+            # Standort in Klassenvariable abspeichern (mit Namen des Users)
             tmpStandort = [userStandort['breitengrad'], userStandort['laengengrad'], user]
             self.positionenFreunde.append(tmpStandort)
+            # In Box und auf Karte anzeigen und zur Position springen
             self.freundesNamenBox.insert('end', user)
             self.map.set_marker(userStandort['breitengrad'], userStandort['laengengrad'], text=user)
             self.map.set_position(userStandort['breitengrad'], userStandort['laengengrad'], user,
@@ -539,7 +543,7 @@ class FapUebersicht(ctk.CTkFrame):
         response = requests.get(url, params=params)
 
         responseJson = response.json()
-        # Überprüfen, ob die Anfrage erfolgreich war (Statuscode 200)
+        # Überprüfen, ob die Anfrage erfolgreich war
         if response.status_code == 200 and responseJson is not None and 'ergebnis' not in responseJson:
             # Antwortinhalt als JSON ausgeben
             print("Antwortinhalt: ", responseJson)
