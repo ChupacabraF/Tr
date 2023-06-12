@@ -28,6 +28,10 @@ class MainApp(ctk.CTk):
         if self.frame is not None:
             self.frame.destroy()
         self.frame = frame_object
+        if isinstance(frame_object, Register):
+            self.geometry("800x1050")
+        else:
+            self.geometry("800x600")
         self.frame.configure(fg_color="transparent")
         self.frame.pack()
 
@@ -93,7 +97,7 @@ class Login(ctk.CTkFrame):
                             icon="warning", option_1="Ok")
 
 
-class Register(ctk.CTkScrollableFrame):
+class Register(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
