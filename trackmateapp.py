@@ -193,12 +193,7 @@ class Register(ctk.CTkFrame):
 
     # Muss ausgeführt werden, sobald die PLZ eingegeben wird
     def abfrage_ort_zu_plz(self, plz):
-        # Wann muss diese benutzt werden?
-        # http://api.geonames.org/postalCodeSearchJSON?postalcode=46397&username=isjupr
-
-        # URL des Endpunkts
-        # TODO: Endpunkt von ihm einbauen?
-        url = "http://api.geonames.org/postalCodeSearchJSON"
+        url = f'{settings.baseUri}/getOrt'
 
         # Query-Parameter
         params = {
@@ -215,8 +210,8 @@ class Register(ctk.CTkFrame):
             print("Antwortinhalt:")
             print(response.json())
 
-            self.ort_entry.insert(0, response.json()["postalCodes"][0]["placeName"])
-            return response.json()["postalCodes"][0]["placeName"]
+            self.ort_entry.insert(0, response.json()["name"])
+            return response.json()["name"]
         else:
             print("Fehler bei der Anfrage. Statuscode:", response.status_code)
             return False
