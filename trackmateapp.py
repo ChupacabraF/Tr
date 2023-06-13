@@ -1,4 +1,5 @@
 import json
+import threading
 import tkinter
 import re
 import customtkinter as ctk
@@ -293,15 +294,15 @@ class Register(ctk.CTkFrame):
 
 
 class FapUebersicht(ctk.CTkFrame):
-    def __init__(self, master, user, sessionId, **kwargs):
+    def __init__(self, master, user, session_id, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
         self.configure(fg_color='transparent')
 
         # ============ Bei beiden Frames (rechts und links) erstellen ============
         self.user = user
-        self.sessionID = sessionId
-        print('User: ', user, ' sessionID: ', sessionId)
+        self.sessionID = session_id
+        print('User: ', user, ' sessionID: ', session_id)
         self.positionSelbst = None
         self.positionenFreunde = []
         self.grid_columnconfigure(0, weight=0)
@@ -318,7 +319,7 @@ class FapUebersicht(ctk.CTkFrame):
         # User suchen und auf Karte anzeigen
         self.search_user_field = ctk.CTkEntry(master=self.frame_left,
                                               placeholder_text="Benutzer suchen")
-        self.search_user_field.bind("<Return>", self.standortFreundSuchenUndAufKarteMarkieren)
+        self.search_user_field.bind("<Return>", self.standort_freund_suchen_und_auf_karte_markieren)
         self.search_user_field.grid(pady=(12, 0), padx=(20, 20), row=0, column=0)
 
         # Anzeigen der ausgewählten Freunde
@@ -356,7 +357,7 @@ class FapUebersicht(ctk.CTkFrame):
 
         self.standort_melden_button = ctk.CTkButton(master=self.frame_left,
                                                     text="Standort melden",
-                                                    command=self.manuellStandortFuerAktuellenUserSetzen)
+                                                    command=self.manuell_standort_fuer_aktuellen_user_setzen)
         self.standort_melden_button.grid(pady=(10, 20), padx=(20, 20), row=8, column=0)
         # ============================ Rechte Seite ===============================
 
@@ -387,14 +388,17 @@ class FapUebersicht(ctk.CTkFrame):
         self.map.grid(row=1, rowspan=1, column=0, columnspan=3, sticky="nswe", padx=(0, 0), pady=(0, 0))
         self.map.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
         self.map.add_right_click_menu_command(label="Als aktuellen Standort melden",
-                                              command=self.standortFuerAktuellenUserSetzen, pass_coords=True)
+                                              command=self.standort_fuer_aktuellen_user_setzen, pass_coords=True)
 
         # eigenen Standort abfragen und in Karte markieren
-        eigener_standort = self.getStandortForUser(user)
+        eigener_standort = self.get_standort_for_user(user)
         if eigener_standort is not None:
             self.map.set_position(eigener_standort['breitengrad'], eigener_standort['laengengrad'], 'Mein Standort',
                                   True)
             self.positionSelbst = [eigener_standort['breitengrad'], eigener_standort['laengengrad']]
+
+        t = threading.Timer(10.0, self.karte_aktualisieren)
+        t.start()
 
     def standort_suchen(self, event=None):
         self.map.set_address(self.standortSucheInput.get())
@@ -426,10 +430,23 @@ class FapUebersicht(ctk.CTkFrame):
             self.positionenFreunde.pop(i)
 
         # Karte neu laden
+        self.karte_aktualisieren()
+
+    def karte_aktualisieren(self):
+        print('Karte wird neu geladen...')
         self.map.delete_all_marker()
         self.map.set_marker(self.positionSelbst[0], self.positionSelbst[1], "Mein Standort")
         for element in self.positionenFreunde:
+            # Standort neu abfragen
+            user_standort = self.get_standort_for_user(element[2])
+            if user_standort is not None and 'breitengrad' in user_standort:
+                # Standort in Klassenvariable aktualisieren
+                element[0] = user_standort['breitengrad']
+                element[1] = user_standort['laengengrad']
             self.map.set_marker(element[0], element[1], element[2])
+        # Damit die Standorte weiterhin alle 10 Sekunden aktualisiert werden
+        t = threading.Timer(10.0, self.karte_aktualisieren)
+        t.start()
 
     def ort_fuer_plz_abfragen(self, plz):
         url = f'{settings.baseUri}/getOrt'
@@ -454,7 +471,7 @@ class FapUebersicht(ctk.CTkFrame):
             print("Antwortinhalt: ", response_json)
         return True
 
-    def manuellStandortFuerAktuellenUserSetzen(self, event=None):
+    def manuell_standort_fuer_aktuellen_user_setzen(self, event=None):
         # URL des Endpunkts
         url = f'{settings.baseUri}/getStandortPerAdresse'
 
@@ -476,12 +493,12 @@ class FapUebersicht(ctk.CTkFrame):
             # Antwortinhalt als JSON ausgeben
             print("Antwortinhalt: ", response_json)
             koordinaten = [response_json['breitengrad'], response_json['laengengrad']]
-            self.standortFuerAktuellenUserSetzen(koordinaten)
+            self.standort_fuer_aktuellen_user_setzen(koordinaten)
         else:
             print("Fehler bei Anfrage der Koordinaten. Statuscode:", response.status_code)
             print("Antwortinhalt: ", response_json)
 
-    def standortFuerAktuellenUserSetzen(self, koordinaten):
+    def standort_fuer_aktuellen_user_setzen(self, koordinaten):
         self.map.delete_all_marker()
         self.positionSelbst = [koordinaten[0], koordinaten[1]]
         self.map.set_marker(koordinaten[0], koordinaten[1], "Mein Standort")
@@ -516,9 +533,9 @@ class FapUebersicht(ctk.CTkFrame):
             print("Fehler bei der Anfrage. Statuscode:", response.status_code)
             return None
 
-    def standortFreundSuchenUndAufKarteMarkieren(self, event=None):
+    def standort_freund_suchen_und_auf_karte_markieren(self, event=None):
         user = self.search_user_field.get()
-        userStandort = self.getStandortForUser(user)
+        userStandort = self.get_standort_for_user(user)
         if userStandort is not None and 'breitengrad' in userStandort:
             # Standort in Klassenvariable abspeichern (mit Namen des Users)
             tmpStandort = [userStandort['breitengrad'], userStandort['laengengrad'], user]
@@ -529,7 +546,7 @@ class FapUebersicht(ctk.CTkFrame):
             self.map.set_position(userStandort['breitengrad'], userStandort['laengengrad'], user,
                                   True)
 
-    def getStandortForUser(self, user):
+    def get_standort_for_user(self, user):
         # URL des Endpunkts
         url = f'{settings.baseUri}/getStandort'
 
